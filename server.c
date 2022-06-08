@@ -7,7 +7,7 @@
 #include <sys/ipc.h>
 #include <sys/msg.h>
 #include <pthread.h>
-#define ARR_LEN 10
+#define ARR_LEN 1000
 #define MSG_LEN 1000
 #define PID_LEN 10
 
@@ -65,7 +65,6 @@ int main(){
         info->pid = pid;
         pthread_t thread;
         pthread_create(&thread, NULL, matrixOrdering, info);
-        // pthread_join(thread, NULL);
     }
 
     // close the mailbox
@@ -75,18 +74,18 @@ int main(){
 
 void *matrixOrdering(void *args){
 
-    // get pid from argument and set filename for this clients array
+    // get pid from argument and set filename for save this client's array as sorted
     struct thread_info *info = args;
-    int processId = info->pid;
+    int pid = info->pid;
     char pid_str[PID_LEN];
     char filename[PID_LEN + 4];
-    sprintf(pid_str,"%d",processId);
+    sprintf(pid_str,"%d",pid);
     strcpy(filename, pid_str);
     strcat(filename, ".txt");
 
     // create new special message queue for the client with its pid
     int msgid;
-    msgid = msgget(processId, 0666 | IPC_CREAT);
+    msgid = msgget(pid, 0666 | IPC_CREAT);
     if (msgid == -1) {  
         printf("Error in creating queue!\n");  
         exit(0);  
@@ -118,7 +117,7 @@ void *matrixOrdering(void *args){
             }
         }
 
-        // open file and write sorted array
+        // open file and write sorted array, delimiter is COMMA
         FILE *file;
         if ((file = fopen(filename, "w")) == NULL) {
             printf("File can not be opened: %s!\n", filename);

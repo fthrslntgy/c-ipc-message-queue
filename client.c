@@ -6,11 +6,13 @@
 #include <string.h>
 #include <sys/ipc.h>
 #include <sys/msg.h>
-#define ARR_LEN 10
+// ARR_LEN is size of random array. You can change it but dont forget to change it in server.c too
+#define ARR_LEN 1000
 #define MSG_LEN 1000
 #define PID_LEN 10
 #define SLP_TIME 10
-#define RNDM_SIZE 100
+// RNDM_BOUND is upper bound of array's random elements. Now they're between 0 and 100
+#define RNDM_BOUND 100 
 
 // structure for messages
 struct buf_msg_txt{
@@ -27,8 +29,11 @@ int main(){
 
     // get pid and write it in a string
     int pid = getpid();
-    char pidString[PID_LEN];
-    sprintf(pidString,"%d",pid);
+    char pid_str[PID_LEN];
+    char filename[PID_LEN + 4];
+    sprintf(pid_str,"%d",pid);
+    strcpy(filename, pid_str);
+    strcat(filename, ".txt");
     printf("My PID: %d.\n", pid);
 
     // key and msgid for mailbox
@@ -45,7 +50,7 @@ int main(){
 
     // send pid to server
     message_txt.type_msg = 1;
-    strcpy(message_txt.txt_msg, pidString);
+    strcpy(message_txt.txt_msg, pid_str);
     msgsnd(msgid, &message_txt, sizeof(message_txt), 0);
 
     // get servers message
@@ -65,10 +70,10 @@ int main(){
 
     while(1){
         // Create random array and print it
-        printf("Random Array: ");
+        printf("\n\nRandom Array: ");
         int random_array[ARR_LEN];
         for(int i = 0; i < ARR_LEN; i++){
-            random_array[i] = rand() % RNDM_SIZE;
+            random_array[i] = rand() % RNDM_BOUND;
             if(i != ARR_LEN -1)
                 printf("%d,", random_array[i]);
             else
@@ -85,6 +90,34 @@ int main(){
         // get servers message
         msgrcv(msgid, &message_txt, sizeof(message_txt), 5, 0);
         printf("Server says: %s\n", message_txt.txt_msg);
+
+        // read context of file
+        FILE *file;
+        if ((file = fopen(filename, "r")) == NULL) {
+            printf("File can not be opened: %s!\n", filename);
+            exit(1);
+        }
+
+        // read file context and save it as string, delimiter is COMMA
+        int size_of_file = ARR_LEN*RNDM_BOUND;
+        char file_context [size_of_file];
+        int sorted_array [ARR_LEN];
+        fscanf(file, "%s", file_context);
+        fclose(file);
+        char * token = strtok(file_context, ",");
+        int i = 0;
+        while( token != NULL ) {
+            sorted_array[i++] = atoi(token);
+            token = strtok(NULL, ",");
+        }
+
+        // print sorted array
+        for(int i = 0; i < ARR_LEN; i++){
+            if(i != ARR_LEN -1)
+                printf("%d,", sorted_array[i]);
+            else
+                printf("%d\n", sorted_array[i]);
+        }
 
         // sleep
         sleep(SLP_TIME);
