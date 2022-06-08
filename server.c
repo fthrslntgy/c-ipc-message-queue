@@ -7,18 +7,21 @@
 #include <sys/ipc.h>
 #include <sys/msg.h>
 #include <pthread.h>
+#define ARR_LEN 10
+#define MSG_LEN 1000
+#define PID_LEN 10
 
 void *matrixOrdering(void *args);
 
 // structure for messages
 struct buf_msg_txt{
     long type_msg;
-    char txt_msg[1000];
+    char txt_msg[MSG_LEN];
 } message_txt;
 
 struct buf_msg_arr{
     long type_msg;
-    int arr_msg[1000];
+    int arr_msg[ARR_LEN];
 } message_arr;
 
 // structure for thread function's parameter
@@ -36,14 +39,14 @@ int main(){
     // create the mailbox
     msgid = msgget(key, 0666 | IPC_CREAT);
     if (msgid == -1) {  
-        printf("Error in creating queue\n");  
+        printf("Error in creating queue!\n");  
         exit(0);  
     }  
 
     // in a loop, wait for a connection and if there is a connection from a client, create a thread for it
     while (1){
 
-        printf("Waiting for connection ...\n");
+        printf("Waiting for connection...\n");
         // a client's pid received at here
         msgrcv(msgid, &message_txt, sizeof(message_txt), 1, 0);
         int pid;
@@ -52,7 +55,7 @@ int main(){
         
         // send an info message to client
         message_txt.type_msg = 2;
-        char message[1000]  = "I got your request. I am opening a special queue with your PID as its key.";
+        char message[MSG_LEN]  = "I got your PID. I am opening a special queue with your PID as its key.";
         strcpy(message_txt.txt_msg, message);
         msgsnd(msgid, &message_txt, sizeof(message_txt), 0);
 
@@ -72,39 +75,68 @@ int main(){
 
 void *matrixOrdering(void *args){
 
-    // get pid from argument
+    // get pid from argument and set filename for this clients array
     struct thread_info *info = args;
     int processId = info->pid;
-    printf("Thread created for client with PID: %d\n", processId);
+    char pid_str[PID_LEN];
+    char filename[PID_LEN + 4];
+    sprintf(pid_str,"%d",processId);
+    strcpy(filename, pid_str);
+    strcat(filename, ".txt");
 
     // create new special message queue for the client with its pid
     int msgid;
     msgid = msgget(processId, 0666 | IPC_CREAT);
     if (msgid == -1) {  
-        printf("Error in creating queue\n");  
+        printf("Error in creating queue!\n");  
         exit(0);  
     } 
 
     // send an info message to client
     message_txt.type_msg = 3;
-    char message[1000]  = "Special queue has been created for you.";
+    char message[MSG_LEN]  = "Special queue has been created for you.";
     strcpy(message_txt.txt_msg, message);
     msgsnd(msgid, &message_txt, sizeof(message_txt), 0);
     
     // in loop, wait arrays from client
     while(1){
         
-        printf("Waiting for client's message as array.\n");  
+        // in here, client sends array
         msgrcv(msgid, &message_arr, sizeof(message_arr), 4, 0);
         int *random_array;
         random_array = message_arr.arr_msg;
-        for(int i = 0; i < 10; i++){
-            printf("%d ", random_array[i]);
+
+        // sort array in "not descending" order
+        int a;
+        for (int i = 0; i < ARR_LEN; ++i) {
+            for (int j = i + 1; j < ARR_LEN; ++j) {
+                if (random_array[i] > random_array[j]) {
+                    a =  random_array[i];
+                    random_array[i] = random_array[j];
+                    random_array[j] = a;
+                }
+            }
         }
-        printf("\nArray has been received.\n");  
+
+        // open file and write sorted array
+        FILE *file;
+        if ((file = fopen(filename, "w")) == NULL) {
+            printf("File can not be opened: %s!\n", filename);
+            exit(1);
+        }
+        for(int i = 0; i < ARR_LEN-1; i++){
+            fprintf(file, "%d,", random_array[i]);
+        }
+        fprintf(file, "%d", random_array[ARR_LEN-1]);
+        fclose(file);
+
+        // send client an info message
+        message_txt.type_msg = 5;
+        char message[MSG_LEN]  = "Your array sorted and writed into <YOUR_PID>.txt.";
+        strcpy(message_txt.txt_msg, message);
+        msgsnd(msgid, &message_txt, sizeof(message_txt), 0);
     }
 
     // close the mailbox
     msgctl(msgid, IPC_RMID, NULL);
-    //printf("Thread finished\n");
 }
