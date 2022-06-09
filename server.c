@@ -7,9 +7,18 @@
 #include <sys/ipc.h>
 #include <sys/msg.h>
 #include <pthread.h>
+
+#define KEY_CODE "fatih"
+// ARR_LEN is size of random array. You can change it but dont forget to change it in server.c too
 #define ARR_LEN 1000
 #define MSG_LEN 1000
 #define PID_LEN 10
+// Message code definations
+#define MSG_FRST_CNNCT 1
+#define MSG_CNNCT_OK 2
+#define MSG_SPCL_Q_OK 3
+#define MSG_ARR_SND 4
+#define MSG_ARR_SRTD 5
 
 void *matrixOrdering(void *args);
 
@@ -34,7 +43,7 @@ int main(){
     // key and msgid for mailbox
     key_t key;
     int msgid;
-    key = ftok("fatih", 25);
+    key = ftok(KEY_CODE, 25);
 
     // create the mailbox
     msgid = msgget(key, 0666 | IPC_CREAT);
@@ -48,13 +57,13 @@ int main(){
 
         printf("Waiting for connection...\n");
         // a client's pid received at here
-        msgrcv(msgid, &message_txt, sizeof(message_txt), 1, 0);
+        msgrcv(msgid, &message_txt, sizeof(message_txt), MSG_FRST_CNNCT, 0);
         int pid;
         pid = atoi(message_txt.txt_msg);
         printf("Connection received from client with PID: %d.\n", pid);
         
         // send an info message to client
-        message_txt.type_msg = 2;
+        message_txt.type_msg = MSG_CNNCT_OK;
         char message[MSG_LEN]  = "I got your PID. I am opening a special queue with your PID as its key.";
         strcpy(message_txt.txt_msg, message);
         msgsnd(msgid, &message_txt, sizeof(message_txt), 0);
@@ -92,7 +101,7 @@ void *matrixOrdering(void *args){
     } 
 
     // send an info message to client
-    message_txt.type_msg = 3;
+    message_txt.type_msg = MSG_SPCL_Q_OK;
     char message[MSG_LEN]  = "Special queue has been created for you.";
     strcpy(message_txt.txt_msg, message);
     msgsnd(msgid, &message_txt, sizeof(message_txt), 0);
@@ -101,7 +110,7 @@ void *matrixOrdering(void *args){
     while(1){
         
         // in here, client sends array
-        msgrcv(msgid, &message_arr, sizeof(message_arr), 4, 0);
+        msgrcv(msgid, &message_arr, sizeof(message_arr), MSG_ARR_SND, 0);
         int *random_array;
         random_array = message_arr.arr_msg;
 
@@ -130,7 +139,7 @@ void *matrixOrdering(void *args){
         fclose(file);
 
         // send client an info message
-        message_txt.type_msg = 5;
+        message_txt.type_msg = MSG_ARR_SRTD;
         char message[MSG_LEN]  = "Your array sorted and writed into <YOUR_PID>.txt.";
         strcpy(message_txt.txt_msg, message);
         msgsnd(msgid, &message_txt, sizeof(message_txt), 0);

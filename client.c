@@ -6,13 +6,22 @@
 #include <string.h>
 #include <sys/ipc.h>
 #include <sys/msg.h>
+
+#define KEY_CODE "fatih"
 // ARR_LEN is size of random array. You can change it but dont forget to change it in server.c too
 #define ARR_LEN 1000
 #define MSG_LEN 1000
 #define PID_LEN 10
 #define SLP_TIME 10
 // RNDM_BOUND is upper bound of array's random elements. Now they're between 0 and 100
-#define RNDM_BOUND 100 
+#define RNDM_BOUND 100
+// Message code definations
+#define MSG_FRST_CNNCT 1
+#define MSG_CNNCT_OK 2
+#define MSG_SPCL_Q_OK 3
+#define MSG_ARR_SND 4
+#define MSG_ARR_SRTD 5
+
 
 // structure for messages
 struct buf_msg_txt{
@@ -39,7 +48,7 @@ int main(){
     // key and msgid for mailbox
     key_t key;
     int msgid;
-    key = ftok("fatih", 25);
+    key = ftok(KEY_CODE, 25);
 
     // create the mailbox
     msgid = msgget(key, 0666 | IPC_CREAT);
@@ -49,12 +58,12 @@ int main(){
     }
 
     // send pid to server
-    message_txt.type_msg = 1;
+    message_txt.type_msg = MSG_FRST_CNNCT;
     strcpy(message_txt.txt_msg, pid_str);
     msgsnd(msgid, &message_txt, sizeof(message_txt), 0);
 
     // get servers message
-    msgrcv(msgid, &message_txt, sizeof(message_txt), 2, 0);
+    msgrcv(msgid, &message_txt, sizeof(message_txt), MSG_CNNCT_OK, 0);
     printf("Connected to server, it says: %s\n", message_txt.txt_msg);
 
     // mailbox with this clients pid
@@ -65,7 +74,7 @@ int main(){
     } 
 
     // get servers message
-    msgrcv(msgid, &message_txt, sizeof(message_txt), 3, 0);
+    msgrcv(msgid, &message_txt, sizeof(message_txt), MSG_SPCL_Q_OK, 0);
     printf("Server says: %s\n", message_txt.txt_msg);
 
     while(1){
@@ -81,14 +90,15 @@ int main(){
         }
 
         // Send random array
-        message_arr.type_msg = 4;
+        message_arr.type_msg = MSG_ARR_SND;
         for(int i = 0; i < ARR_LEN; i++) {
             message_arr.arr_msg[i] = random_array[i];
         }
         msgsnd(msgid, &message_arr, sizeof(message_arr), 0);
+        printf("Random array sended. Waiting for sorting...\n");
 
         // get servers message
-        msgrcv(msgid, &message_txt, sizeof(message_txt), 5, 0);
+        msgrcv(msgid, &message_txt, sizeof(message_txt), MSG_ARR_SRTD, 0);
         printf("Server says: %s\n", message_txt.txt_msg);
 
         // read context of file
@@ -115,11 +125,13 @@ int main(){
         for(int i = 0; i < ARR_LEN; i++){
             if(i != ARR_LEN -1)
                 printf("%d,", sorted_array[i]);
-            else
+            else{
                 printf("%d\n", sorted_array[i]);
+            }
         }
 
         // sleep
+        printf("Sleeping...\n");
         sleep(SLP_TIME);
     }
 
