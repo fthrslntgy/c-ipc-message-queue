@@ -7,6 +7,7 @@
 #include <string.h>
 #include <sys/ipc.h>
 #include <sys/msg.h>
+#include <math.h> // only for calculate block number with ceil()
 
 #define KEY_CODE "fatih"
 

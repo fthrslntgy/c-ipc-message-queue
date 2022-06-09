@@ -48,6 +48,9 @@ int main(){
     msgrcv(msgid, &message_txt, sizeof(message_txt), MSG_SPCL_Q_OK, 0);
     printf("Server says: %s\n", message_txt.txt_msg);
 
+    // calculate number of blocks
+    int num_blocks = (int)ceil((float)ARR_LEN/BLOCK_LEN);
+
     while(1){
         // Create random array and print it
         printf("\n\nRandom Array: ");
@@ -62,7 +65,7 @@ int main(){
 
         // Send random array
         // array sending in blocks cause of system variable "msgmax", any big array could not be sized in only one message
-        for (int i = 0; i < (ARR_LEN/BLOCK_LEN)+1; i++){ // loops for every blocks, number of blocks is exactly (ARR_LEN/BLOCK_LEN)+1
+        for (int i = 0; i < num_blocks; i++){ // loops for every blocks
             message_arr.type_msg = MSG_ARR_SND;
                 for (int j = i*BLOCK_LEN; j < (i+1)*BLOCK_LEN && j < ARR_LEN; j++) 
                     message_arr.arr_msg[j-(i*BLOCK_LEN)] = random_array[j]; // put values into blocks

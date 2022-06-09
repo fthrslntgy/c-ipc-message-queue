@@ -77,13 +77,16 @@ void *matrixOrdering(void *args){
     char message[MSG_LEN]  = "Special queue has been created for you.";
     strcpy(message_txt.txt_msg, message);
     msgsnd(msgid, &message_txt, sizeof(message_txt), 0);
+
+    // calculate number of blocks
+    int num_blocks = (int)ceil((float)ARR_LEN/BLOCK_LEN);
     
     // in loop, wait arrays from client
     while(1){
         
         // in here, client sends array
         int random_array[ARR_LEN];
-        for (int i = 0; i < (ARR_LEN/BLOCK_LEN)+1; i++){ // loops for every blocks, number of blocks is exactly (ARR_LEN/BLOCK_LEN)+1
+        for (int i = 0; i < num_blocks; i++){ // loops for every blocks
             msgrcv(msgid, &message_arr, sizeof(message_arr), MSG_ARR_SND, 0); // get block
                 for (int j = i*BLOCK_LEN; j < (i+1)*BLOCK_LEN && j < ARR_LEN; j++)
                     random_array[j] = message_arr.arr_msg[j-(i*BLOCK_LEN)]; // write block index by index to random array
