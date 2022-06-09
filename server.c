@@ -1,37 +1,9 @@
 // Fatih Arslan Tugay
 // 181101008
-#include <stdio.h>
-#include <stdlib.h>
-#include <unistd.h>
-#include <string.h>
-#include <sys/ipc.h>
-#include <sys/msg.h>
+#include "defines.h"
 #include <pthread.h>
 
-#define KEY_CODE "fatih"
-// ARR_LEN is size of random array. You can change it but dont forget to change it in server.c too
-#define ARR_LEN 1000
-#define MSG_LEN 1000
-#define PID_LEN 10
-// Message code definations
-#define MSG_FRST_CNNCT 1
-#define MSG_CNNCT_OK 2
-#define MSG_SPCL_Q_OK 3
-#define MSG_ARR_SND 4
-#define MSG_ARR_SRTD 5
-
 void *matrixOrdering(void *args);
-
-// structure for messages
-struct buf_msg_txt{
-    long type_msg;
-    char txt_msg[MSG_LEN];
-} message_txt;
-
-struct buf_msg_arr{
-    long type_msg;
-    int arr_msg[ARR_LEN];
-} message_arr;
 
 // structure for thread function's parameter
 struct thread_info {
@@ -110,9 +82,18 @@ void *matrixOrdering(void *args){
     while(1){
         
         // in here, client sends array
-        msgrcv(msgid, &message_arr, sizeof(message_arr), MSG_ARR_SND, 0);
-        int *random_array;
-        random_array = message_arr.arr_msg;
+        int random_array[ARR_LEN];
+        for (int i = 0; i < (ARR_LEN/BLOCK_LEN)+1; i++){
+
+            msgrcv(msgid, &message_arr, sizeof(message_arr), MSG_ARR_SND, 0);
+                for (int j = i*BLOCK_LEN; j < (i+1)*BLOCK_LEN && j < ARR_LEN; j++)
+                    random_array[j] = message_arr.arr_msg[j-(i*BLOCK_LEN)];
+            message_txt.type_msg = MSG_ARR_RCVD;
+            char message[MSG_LEN];
+            sprintf(message, "%d. block of array has been received.", i+1);
+            strcpy(message_txt.txt_msg, message);
+            msgsnd(msgid, &message_txt, sizeof(message_txt), 0);
+        }
 
         // sort array in "not descending" order
         int a;
