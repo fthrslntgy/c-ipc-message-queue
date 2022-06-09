@@ -83,16 +83,15 @@ void *matrixOrdering(void *args){
         
         // in here, client sends array
         int random_array[ARR_LEN];
-        for (int i = 0; i < (ARR_LEN/BLOCK_LEN)+1; i++){
-
-            msgrcv(msgid, &message_arr, sizeof(message_arr), MSG_ARR_SND, 0);
+        for (int i = 0; i < (ARR_LEN/BLOCK_LEN)+1; i++){ // loops for every blocks, number of blocks is exactly (ARR_LEN/BLOCK_LEN)+1
+            msgrcv(msgid, &message_arr, sizeof(message_arr), MSG_ARR_SND, 0); // get block
                 for (int j = i*BLOCK_LEN; j < (i+1)*BLOCK_LEN && j < ARR_LEN; j++)
-                    random_array[j] = message_arr.arr_msg[j-(i*BLOCK_LEN)];
+                    random_array[j] = message_arr.arr_msg[j-(i*BLOCK_LEN)]; // write block index by index to random array
             message_txt.type_msg = MSG_ARR_RCVD;
             char message[MSG_LEN];
-            sprintf(message, "%d. block of array has been received.", i+1);
+            sprintf(message, "%d. block of array has been received.", i+1); 
             strcpy(message_txt.txt_msg, message);
-            msgsnd(msgid, &message_txt, sizeof(message_txt), 0);
+            msgsnd(msgid, &message_txt, sizeof(message_txt), 0); // send the message that i'th block has been received
         }
 
         // sort array in "not descending" order

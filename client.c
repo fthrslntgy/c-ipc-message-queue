@@ -61,12 +61,13 @@ int main(){
         }
 
         // Send random array
-        for (int i = 0; i < (ARR_LEN/BLOCK_LEN)+1; i++){
+        // array sending in blocks cause of system variable "msgmax", any big array could not be sized in only one message
+        for (int i = 0; i < (ARR_LEN/BLOCK_LEN)+1; i++){ // loops for every blocks, number of blocks is exactly (ARR_LEN/BLOCK_LEN)+1
             message_arr.type_msg = MSG_ARR_SND;
-                for (int j = i*BLOCK_LEN; j < (i+1)*BLOCK_LEN && j < ARR_LEN; j++)
-                    message_arr.arr_msg[j-(i*BLOCK_LEN)] = random_array[j];
-            msgsnd(msgid, &message_arr, sizeof(message_arr), 0);
-            msgrcv(msgid, &message_txt, sizeof(message_txt), MSG_ARR_RCVD, 0);
+                for (int j = i*BLOCK_LEN; j < (i+1)*BLOCK_LEN && j < ARR_LEN; j++) 
+                    message_arr.arr_msg[j-(i*BLOCK_LEN)] = random_array[j]; // put values into blocks
+            msgsnd(msgid, &message_arr, sizeof(message_arr), 0); // send block
+            msgrcv(msgid, &message_txt, sizeof(message_txt), MSG_ARR_RCVD, 0); // get the message about i'th block has been received
             printf("Server says: %s\n", message_txt.txt_msg);
         }
         printf("Random array completely sended. Waiting for sorting...\n");
