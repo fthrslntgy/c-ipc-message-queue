@@ -15,11 +15,13 @@ Server ve clientlerin her birinin ayrı terminalde koşturulması gerekmektedir.
 ```
 
 ## Detaylı Kod Açıklaması
-  Her iki dosyada da kullanılan önemli define tanımları şunları belirtir:
+Her iki dosyada da kullanılan önemli define tanımları şunları belirtir:
 - ARR_LEN: Oluşturulacak ve sıralanacak rastgele dizinin boyutu
 - BLOCK_LEN: Dizinin kaç uzunluğunda bloklar halinde gönderileceğinin bilgisi (sistemde bulunan "msgmax" değişkeninin default olarak 8192 değerinde olması sebebiyle 1000 uzunluğunda dizi tek bir "msgsnd" komutunda gönderilemedi. bu sebeple sistem bilgisini değişmek yerine dizi bloklara bölünerek gönderilmektedir)
 - MSG_LEN: IPC haberleşmesinde kullanılacak mesajların boyutu
-- PID_LEN: PID değişkeninin diziye çevrildiği durumlardaki dizinin boyutu (PID değerinin kodda maksimum 10 haneli olacağı varsayıldı.)
+- PID_LEN: PID değişkeninin diziye çevrildiği durumlardaki dizinin boyutu (PID değerinin kodda maksimum 10 haneli olacağı varsayıldı
+  
+Yalnızca client tarafındaki define tanımları:
 - SLP_TIME: Client process'in kaç saniyede bir rastgele array oluşturup sıralaması için server'a göndereceği
 - RNDM_BOUND: Random oluşturulacak sayıların üst sınırı
 
