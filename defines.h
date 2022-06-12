@@ -1,5 +1,3 @@
-// Fatih Arslan Tugay
-// 181101008
 // This header file includes common lines of both c files
 #include <stdio.h>
 #include <stdlib.h>
@@ -19,7 +17,7 @@
 #define MSG_LEN 1000
 #define PID_LEN 10
 
-// Message code definations
+// Message code definations, don't need to change
 #define MSG_FRST_CNNCT 1
 #define MSG_CNNCT_OK 2
 #define MSG_SPCL_Q_OK 3

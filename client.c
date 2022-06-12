@@ -1,5 +1,3 @@
-// Fatih Arslan Tugay
-// 181101008
 #include "defines.h"
 #define SLP_TIME 10
 // RNDM_BOUND is upper bound of array's random elements. Now they're between 0 and 100

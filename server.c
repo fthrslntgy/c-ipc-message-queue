@@ -1,5 +1,3 @@
-// Fatih Arslan Tugay
-// 181101008
 #include "defines.h"
 #include <pthread.h>
 
