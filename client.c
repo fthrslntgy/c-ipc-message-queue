@@ -1,5 +1,4 @@
 #include "defines.h"
-#define SLP_TIME 10
 // RNDM_BOUND is upper bound of array's random elements. Now they're between 0 and 100
 #define RNDM_BOUND 100
 
@@ -10,9 +9,11 @@ int main(){
     char pid_str[PID_LEN];
     char filename[PID_LEN + 4];
     sprintf(pid_str,"%d",pid);
+    printf("I am client. My PID: %d.\n", pid);
+
+    // detect filename that server will write ordered array into it
     strcpy(filename, pid_str);
     strcat(filename, ".txt");
-    printf("My PID: %d.\n", pid);
 
     // key and msgid for mailbox
     key_t key;
@@ -26,16 +27,30 @@ int main(){
         exit(0);  
     }
 
-    // send pid to server
-    message_txt.type_msg = MSG_FRST_CNNCT;
-    strcpy(message_txt.txt_msg, pid_str);
-    msgsnd(msgid, &message_txt, sizeof(message_txt), 0);
+    int valid_connection = 0;
+    int server_pid;
+    while(!valid_connection){ // loop until find an alive server
+        // send pid to server
+        message_txt.type_msg = MSG_FRST_CNNCT;
+        strcpy(message_txt.txt_msg, pid_str);
+        msgsnd(msgid, &message_txt, sizeof(message_txt), 0);
 
-    // get servers message
-    msgrcv(msgid, &message_txt, sizeof(message_txt), MSG_CNNCT_OK, 0);
-    printf("Connected to server, it says: %s\n", message_txt.txt_msg);
-
-    // mailbox with this clients pid
+        // get servers message
+        msgrcv(msgid, &message_txt, sizeof(message_txt), MSG_CNNCT_OK, 0);
+        server_pid = atoi(message_txt.txt_msg);
+        if (is_alive(server_pid)){
+            // if server is alive, continue to communication
+            printf("Succesfully connected to server with PID: %d.\n", server_pid);
+            valid_connection = 1;
+        }
+        else{
+            // else skip this server. continue to wait for alive server
+            printf("Connection is not valid with DEAD server with PID: %d. Cannot continue to messaging.\n", server_pid);
+        }
+    }
+    
+    
+    // mailbox with this clients pid (Special queue with this client's pid)
     msgid = msgget(pid, 0666 | IPC_CREAT);
     if (msgid == -1) {  
         printf("Error in creating queue!\n");  
@@ -43,6 +58,10 @@ int main(){
     } 
 
     // get servers message
+    if (!is_alive(server_pid)){ // before msgrcv, check status of server
+        printf("Server (with pid %d) is dead. Exiting...\n", server_pid);
+        exit(0);
+    }
     msgrcv(msgid, &message_txt, sizeof(message_txt), MSG_SPCL_Q_OK, 0);
     printf("Server says: %s\n", message_txt.txt_msg);
 
@@ -68,12 +87,20 @@ int main(){
                 for (int j = i*BLOCK_LEN; j < (i+1)*BLOCK_LEN && j < ARR_LEN; j++) 
                     message_arr.arr_msg[j-(i*BLOCK_LEN)] = random_array[j]; // put values into blocks
             msgsnd(msgid, &message_arr, sizeof(message_arr), 0); // send block
+            if (!is_alive(server_pid)){ // before msgrcv, check status of server
+                printf("Server (with pid %d) is dead. Exiting...\n", server_pid);
+                exit(0);
+            }
             msgrcv(msgid, &message_txt, sizeof(message_txt), MSG_ARR_RCVD, 0); // get the message about i'th block has been received
             printf("Server says: %s\n", message_txt.txt_msg);
         }
         printf("Random array completely sended. Waiting for sorting...\n");
 
         // get servers message
+        if (!is_alive(server_pid)){ // before msgrcv, check status of server
+            printf("Server (with pid %d) is dead. Exiting...\n", server_pid);
+            exit(0);
+        }
         msgrcv(msgid, &message_txt, sizeof(message_txt), MSG_ARR_SRTD, 0);
         printf("Server says: %s\n", message_txt.txt_msg);
 

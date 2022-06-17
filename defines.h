@@ -5,9 +5,11 @@
 #include <string.h>
 #include <sys/ipc.h>
 #include <sys/msg.h>
+#include <pthread.h>
 #include <math.h> // only for calculate block number with ceil()
 
 #define KEY_CODE "fatih"
+#define SLP_TIME 10
 
 // ARR_LEN is size of random array. You can change it but dont forget to change it in server.c too
 #define ARR_LEN 1000
@@ -25,6 +27,11 @@
 #define MSG_ARR_RCVD 5
 #define MSG_ARR_SRTD 6
 
+// structure for thread function's parameter
+struct thread_info {
+    int pid;
+};
+
 // structure for messages
 struct buf_msg_txt{
     long type_msg;
@@ -35,3 +42,11 @@ struct buf_msg_arr{
     long type_msg;
     int arr_msg[BLOCK_LEN];
 } message_arr;
+
+// check this pid is alive or not
+int is_alive(int pid){
+    
+    if (getpgid(pid) == -1)
+        return 0;
+    return 1;
+}
