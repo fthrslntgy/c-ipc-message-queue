@@ -13,6 +13,7 @@ Server ve clientlerin her birinin ayrı terminalde koşturulması gerekmektedir.
 ./server.out
 ./client.out
 ```
+> **Önemli Not:** Dosyalar çalıştırılırken senkronize şekilde çalıştırılmadıklarında (server veya clientların çalıştırıp hemen terminate edilmesi gibi) veya processler arası iletişim devam ederken bir tarafın terminate edilmesi gibi durumlarda kill edilmiş processlerden kalan message queue'lar ile bağlantı kurulabilmekte veya mesaj bekleme durumunda kalınabilmektedir. Bu durumu kontrol etmek ve önlemek amacıyla hem server hem de client tarafında iletişimin başında ve devamında ara ara (msgrcv fonksiyonları öncesinde -msgrcv fonksiyonu mesaj alınmadan kodun devamını çalıştırmadığı için-) iletişim kurulan processin durumu (kill edilip edilmediği) kontrol edilerek çalışır durumda olmayan durumdaki processlerle olan iletişim iptal edilmektedir. Bu gibi durumlarda komut satırına bilgilendirme mesajı atılmaktadır.
 
 ## Detaylı Kod Açıklaması
 Her iki dosyada da kullanılan önemli define tanımları şunları belirtir:
@@ -20,8 +21,6 @@ Her iki dosyada da kullanılan önemli define tanımları şunları belirtir:
 - BLOCK_LEN: Dizinin kaç uzunluğunda bloklar halinde gönderileceğinin bilgisi (sistemde bulunan "msgmax" değişkeninin default olarak 8192 değerinde olması sebebiyle 1000 uzunluğunda dizi tek bir "msgsnd" komutunda gönderilemedi. bu sebeple sistem bilgisini değişmek yerine dizi bloklara bölünerek gönderilmektedir)
 - MSG_LEN: IPC haberleşmesinde kullanılacak mesajların boyutu
 - PID_LEN: PID değişkeninin diziye çevrildiği durumlardaki dizinin boyutu (PID değerinin kodda maksimum 10 haneli olacağı varsayıldı
-  
-Yalnızca client tarafındaki define tanımları:
 - SLP_TIME: Client process'in kaç saniyede bir rastgele array oluşturup sıralaması için server'a göndereceği
 - RNDM_BOUND: Random oluşturulacak sayıların üst sınırı
 
@@ -31,6 +30,9 @@ Yalnızca client tarafındaki define tanımları:
 
 ### client.c
   Server process ile aynı mailbox keye sahiptir (statik tanımlı) ve server'a bu mailbox üzerinden PID değerini gönderir. Ardından kendisi için açılan message queue bilgisi geldikten sonra bu queue'ya oluşturduğu rastgele diziyi önce standart çıktıya basar, sonra bloklar halinde gönderir. Her gönderdiği bloktan sonra bloğun alındığı bilgisini bekler. Bloklar tamamen gönderilip server'dan dizinin sıralandığı bilgisi geldikten sonra PID.txt dosyasından diziyi okuyarak standart çıktıya basar.
+
+### defines.h
+  Server ve client dosyalarda bulunan ortak tanımlamaları içerir.
 
 ## Senaryo
 1. Server statik bir key ile bir mailbox oluşturur ve dinlemeye başlar.
