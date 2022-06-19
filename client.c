@@ -125,6 +125,7 @@ int main(){
         }
 
         // print sorted array
+        printf("Sorted Array: ");
         for(int i = 0; i < ARR_LEN; i++){
             if(i != ARR_LEN -1)
                 printf("%d,", sorted_array[i]);
